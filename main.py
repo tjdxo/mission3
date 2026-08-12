@@ -6,9 +6,7 @@ EPSILON = 1e-9
 DEFAULT_REPEAT_COUNT = 10
 
 def calculate_mac(matrix_a, matrix_b):
-    """
-    두 행렬의 같은 위치 원소를 곱하고 누적합(MAC)을 계산합니다.
-    """
+    """두 행렬의 같은 위치 원소를 곱하고 누적합(MAC)을 계산합니다."""
     score = 0.0
     size = len(matrix_a)
     for i in range(size):
@@ -29,9 +27,7 @@ def measure_mac_pair(pattern, filter_a, filter_b, repeat=DEFAULT_REPEAT_COUNT):
     return score_a, score_b, elapsed_ms / repeat
 
 def get_matrix_input(size, label):
-    """
-    사용자로부터 n x n 행렬 입력을 안전하게 받습니다.
-    """
+    """사용자로부터 n x n 행렬 입력을 안전하게 받습니다."""
     print(f"\n{label} ({size}줄 입력, 공백 구분):")
     matrix = []
     while len(matrix) < size:
@@ -51,9 +47,7 @@ def get_matrix_input(size, label):
     return matrix
 
 def judge_result(score_a, score_b, label_a, label_b, epsilon=EPSILON):
-    """
-    두 점수를 비교하여 승자 라벨 또는 'UNDECIDED'를 반환합니다.
-    """
+    """두 점수를 비교하여 승자 라벨 또는 'UNDECIDED'를 반환합니다."""
     if abs(score_a - score_b) < epsilon:
         return "UNDECIDED"
     elif score_a > score_b:
@@ -76,7 +70,23 @@ def load_data():
     except FileNotFoundError:
         print("data.json 파일을 찾을 수 없습니다.")
         return None
-    
+
+def normalize_filter_dict(filter_dict):
+    """필터 키를 표준 라벨(Cross, X)로 정규화합니다."""
+    normalized = {}
+    error = ""
+    for key, value in filter_dict.items():
+        label = normalize_label(key)
+        if label in ["Cross", "X"]:
+            normalized[label] = value
+
+    if "Cross" not in normalized:
+        return None, "Cross 필터가 없습니다."
+    if "X" not in normalized:
+        return None, "X 필터가 없습니다."
+
+    return normalized, None
+
 def process_case(p_id, p_info, filters):
     """패턴 하나를 분석하여 점수, 판정 결과, 소요 시간을 반환합니다."""
     pattern_matrix = p_info.get("input")
@@ -153,7 +163,6 @@ def run_user_input_mode():
     score_a, score_b, avg_time = measure_mac_pair(pattern, filter_a, filter_b)
     result = judge_result(score_a, score_b, "A", "B")
 
-
     # 3. 결과 출력
     print("\n#---------------------------------------")
     print("# [3] MAC 결과")
@@ -173,8 +182,19 @@ def run_json_analysis_mode():
     stats = {"total": 0, "pass": 0, "fail": 0, "fail_cases": []}
     perf_summary = {}
 
-    print("\n# [1] 필터 로드 완료")
-    print("# [2] 패턴 분석 시작")
+    print("\n#---------------------------------------")
+    print("# [1] 필터 로드")
+    print("#---------------------------------------")
+    for size_key in sorted(filters.keys(), key=lambda x: int(x.split("_")[1])):
+        _, error = normalize_filter_dict(filters[size_key])
+        if error:
+            print(f"✗ {size_key} 필터 로드 실패: {error}")
+        else:
+            print(f"✓ {size_key} 필터 로드 완료 (Cross, X)")
+
+    print("\n#---------------------------------------")
+    print("# [2] 패턴 분석 (라벨 정규화 적용)")
+    print("#---------------------------------------")
 
     for p_id, p_info in patterns.items():
         res, error = process_case(p_id, p_info, filters)
