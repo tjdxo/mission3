@@ -102,12 +102,8 @@ def process_case(p_id, p_info, filters):
     # MAC 연산 및 시간 측정 (10회 반복)
     f_cross = current_filters.get("cross")
     f_x = current_filters.get("x")
-    
-    start = time.perf_counter()
-    for _ in range(DEFAULT_REPEAT_COUNT):
-        score_cross = calculate_mac(pattern_matrix, f_cross)
-        score_x = calculate_mac(pattern_matrix, f_x)
-    avg_time = ((time.perf_counter() - start) / DEFAULT_REPEAT_COUNT) * 1000
+
+    score_cross, score_x, avg_time = measure_mac_pair(pattern_matrix, f_cross, f_x)
 
     # 판정
     result = judge_result(score_cross, score_x, "Cross", "X")
