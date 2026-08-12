@@ -1,6 +1,10 @@
 import json
 import time
 
+
+EPSILON = 1e-9
+DEFAULT_REPEAT_COUNT = 10
+
 def calculate_mac(matrix_a, matrix_b):
     """
     두 행렬의 같은 위치 원소를 곱하고 누적합(MAC)을 계산합니다.
@@ -11,6 +15,18 @@ def calculate_mac(matrix_a, matrix_b):
         for j in range(size):
             score += matrix_a[i][j] * matrix_b[i][j]
     return score
+
+def measure_mac_pair(pattern, filter_a, filter_b, repeat=DEFAULT_REPEAT_COUNT):
+    """MAC 연산 수행 및 시간을 반복 측정하여 평균 소요 시간을 계산합니다."""
+    score_a, score_b = 0.0, 0.0
+    start = time.perf_counter()
+
+    for _ in range(repeat):
+        score_a = calculate_mac(pattern, filter_a)
+        score_b = calculate_mac(pattern, filter_b)
+
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    return score_a, score_b, elapsed_ms / repeat
 
 def get_matrix_input(size, label):
     """
@@ -34,7 +50,7 @@ def get_matrix_input(size, label):
             
     return matrix
 
-def judge_result(score_a, score_b, label_a, label_b, epsilon=1e-9):
+def judge_result(score_a, score_b, label_a, label_b, epsilon=EPSILON):
     """
     두 점수를 비교하여 승자 라벨 또는 'UNDECIDED'를 반환합니다.
     """
@@ -78,10 +94,10 @@ def process_case(p_id, p_info, filters):
     f_x = current_filters.get("x")
     
     start = time.perf_counter()
-    for _ in range(10):
+    for _ in range(DEFAULT_REPEAT_COUNT):
         score_cross = calculate_mac(pattern_matrix, f_cross)
         score_x = calculate_mac(pattern_matrix, f_x)
-    avg_time = ((time.perf_counter() - start) / 10) * 1000
+    avg_time = ((time.perf_counter() - start) / DEFAULT_REPEAT_COUNT) * 1000
 
     # 판정
     result = judge_result(score_cross, score_x, "Cross", "X")
@@ -133,9 +149,10 @@ def run_user_input_mode():
     print("#---------------------------------------")
     pattern = get_matrix_input(size, "패턴")
 
-    # 2. MAC 연산 수행
-    score_a = calculate_mac(pattern, filter_a)
-    score_b = calculate_mac(pattern, filter_b)
+    # 2. MAC 연산 수행 및 판정
+    score_a, score_b, avg_time = measure_mac_pair(pattern, filter_a, filter_b)
+    result = judge_result(score_a, score_b, "A", "B")
+
 
     # 3. 결과 출력
     print("\n#---------------------------------------")
@@ -143,10 +160,8 @@ def run_user_input_mode():
     print("#---------------------------------------")
     print(f"A 점수: {score_a}")
     print(f"B 점수: {score_b}")
-
-    # 4. 판정 (부동소수점 오차 고려 epsilon 적용)
-    result = judge_result(score_a, score_b, "A", "B")
-    print(f"판정: {result}\n")
+    print(f"연산 시간(평균/10회): {avg_time:.6f} ms")
+    print(f"판정: {'판정 불가 (|A-B| < 1e-9)' if result == 'UNDECIDED' else result}")
     
 def run_json_analysis_mode():
     data = load_data()
