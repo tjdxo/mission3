@@ -31,9 +31,26 @@ def get_matrix_input(size, label):
             
     return matrix
 
-def main():
-    print("=== Mini NPU Simulator (1단계) ===")
-    
+def judge_result(score_a, score_b, label_a, label_b, epsilon=1e-9):
+    """
+    두 점수를 비교하여 승자 라벨 또는 'UNDECIDED'를 반환합니다.
+    """
+    if abs(score_a - score_b) < epsilon:
+        return "UNDECIDED"
+    elif score_a > score_b:
+        return label_a
+    else:
+        return label_b
+
+def normalize_label(label):
+    label = str(label).lower() # 소문자로 통일
+    if label in ['+', 'cross']:
+        return "Cross"
+    if label in ['x']:
+        return "X"
+    return "UNDECIDED"
+
+def run_user_input_mode():
     # 1. 입력 받기 (3x3 기준)
     print("\n#---------------------------------------")
     print("# [1] 필터 입력")
@@ -59,13 +76,31 @@ def main():
     print(f"B 점수: {score_b}")
 
     # 4. 판정 (부동소수점 오차 고려 epsilon 적용)
-    epsilon = 1e-9
-    if abs(score_a - score_b) < epsilon:
-        print("판정: 판정 불가 (동점)")
-    elif score_a > score_b:
-        print("판정: A")
+    result = judge_result(score_a, score_b, "A", "B")
+    print(f"판정: {result}\n")
+
+def run_json_analysis_mode():
+    # 1. JSON 파일 읽기
+    # 2. 필터 로드 및 정규화
+    # 3. 패턴들 하나씩 꺼내서 MAC 연산
+    # 4. PASS/FAIL 판정 및 결과 요약 출력
+    pass 
+
+def main():
+    print("=== Mini NPU Simulator===")
+    print("1. 사용자 입력 (3x3)")
+    print("2. data.json 분석")
+    
+    choice = input("선택: ")
+
+    if choice == '1':
+        # 이전에 만든 모드 1 로직 실행
+        run_user_input_mode()
+    elif choice == '2':
+        # 이제 만들어야 할 모드 2 로직 실행
+        run_json_analysis_mode()
     else:
-        print("판정: B\n")
+        print("잘못된 선택입니다.")
 
 if __name__ == "__main__":
     main()
