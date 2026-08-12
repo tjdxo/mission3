@@ -212,8 +212,9 @@ def run_json_analysis_mode():
             stats["fail_cases"].append(f"{res['id']}: 판정 {res['result']} != 기대 {res['expected']}")
 
         print(f"--- {res['id']} ---")
-        print(f"Cross: {res['scores'][0]:.4f} | X: {res['scores'][1]:.4f}")
-        print(f"판정: {res['result']} | {'PASS' if res['is_pass'] else 'FAIL'}")
+        print(f"Cross 점수: {res['scores'][0]:.4f}")
+        print(f"X 점수: {res['scores'][1]:.4f}")
+        print(f"판정: {res['result']} | expected: {res['expected']} | {'PASS' if res['is_pass'] else 'FAIL'}")
 
         # 성능 데이터 저장 (크기별 마지막 측정값 기준 또는 평균)
         perf_summary[res['size_key']] = {"time": res['time'], "ops": res['n_squared']}
