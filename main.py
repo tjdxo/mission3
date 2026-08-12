@@ -35,9 +35,16 @@ def main():
     print("=== Mini NPU Simulator (1단계) ===")
     
     # 1. 입력 받기 (3x3 기준)
+    print("\n#---------------------------------------")
+    print("# [1] 필터 입력")
+    print("#---------------------------------------")
     size = 3
     filter_a = get_matrix_input(size, "필터 A")
     filter_b = get_matrix_input(size, "필터 B")
+
+    print("\n#---------------------------------------")
+    print("# [2] 패턴 입력")
+    print("#---------------------------------------")
     pattern = get_matrix_input(size, "패턴")
 
     # 2. MAC 연산 수행
@@ -58,7 +65,7 @@ def main():
     elif score_a > score_b:
         print("판정: A")
     else:
-        print("판정: B")
+        print("판정: B\n")
 
 if __name__ == "__main__":
     main()
