@@ -156,9 +156,12 @@ def load_data():
     return data
 
 def normalize_filter_dict(filter_dict):
-    """필터 키를 표준 라벨(Cross, X)로 정규화합니다."""
+    """필터 키를 표준 라벨(Cross, X)로 정규화하고 필수 필터 존재 여부를 검증합니다."""
+    if not isinstance(filter_dict, dict):
+        return None, "필터 정보가 객체(dict) 형태가 아닙니다."
+
     normalized = {}
-    error = ""
+
     for key, value in filter_dict.items():
         label = normalize_label(key)
         if label in ["Cross", "X"]:
@@ -170,6 +173,35 @@ def normalize_filter_dict(filter_dict):
         return None, "X 필터가 없습니다."
 
     return normalized, None
+
+def validate_and_build_filters(raw_filters):
+    validated_filters = {}
+    filter_errors = {}
+
+    for size_key, filter_dict in raw_filters.items():
+        size = parse_size_key(size_key)
+        if size is None:
+            filter_errors[size_key] = f"필터 키 형식 오류: {size_key}"
+            continue
+
+        normalized_filters, error = normalize_filter_dict(filter_dict)
+        if error:
+            filter_errors[size_key] = error
+            continue
+
+        cross_error = validate_matrix(normalized_filters["Cross"], size, f"{size_key}.Cross")
+        if cross_error:
+            filter_errors[size_key] = cross_error
+            continue
+
+        x_error = validate_matrix(normalized_filters["X"], size, f"{size_key}.X")
+        if x_error:
+            filter_errors[size_key] = x_error
+            continue
+
+        validated_filters[size_key] = normalized_filters
+
+    return validated_filters, filter_errors
 
 def process_case(p_id, p_info, filters):
     """패턴 하나를 분석하여 점수, 판정 결과, 소요 시간을 반환합니다."""
