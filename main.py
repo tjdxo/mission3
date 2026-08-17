@@ -1,9 +1,76 @@
 import json
 import time
-
+from collections import defaultdict
 
 EPSILON = 1e-9
 DEFAULT_REPEAT_COUNT = 10
+DATA_FILE = "data.json"
+VALID_RESULT_LABELS = {"Cross", "X"}
+
+def parse_size_key(size_key):
+    parts = size_key.split("_")
+    if len(parts) != 2 or parts[0] != "size" or not parts[1].isdigit():
+        return None
+    return int(parts[1])
+
+def parse_pattern_size(p_id):
+    parts = p_id.split("_")
+    if len(parts) != 3 or parts[0] != "size" or not parts[1].isdigit() or not parts[2].isdigit():
+        return None
+    return int(parts[1])
+
+def validate_matrix(matrix, expected_size=None, name="matrix"):
+    if not isinstance(matrix, list) or not matrix:
+        return f"{name}: 비어 있지 않은 2차원 배열이어야 합니다."
+
+    row_count = len(matrix)
+
+    if expected_size is not None and row_count != expected_size:
+        return f"{name}: 행 수가 {expected_size}가 아닙니다. (현재 {row_count})"
+
+    for i, row in enumerate(matrix):
+        if not isinstance(row, list):
+            return f"{name}: {i}번 행이 리스트가 아닙니다."
+
+        col_count = len(row)
+
+        if expected_size is not None:
+            if col_count != expected_size:
+                return f"{name}: {i}번 행의 열 수가 {expected_size}가 아닙니다. (현재 {col_count})"
+        else:
+            if col_count != row_count:
+                return f"{name}: 정사각형 행렬이 아닙니다. ({row_count}x{col_count})"
+
+        for j, value in enumerate(row):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return f"{name}: ({i}, {j}) 값이 숫자가 아닙니다."
+
+    return None
+
+def validate_pattern_info(p_id, p_info):
+    if not isinstance(p_info, dict):
+        return None, None, "패턴 정보가 객체(dict) 형태가 아닙니다."
+
+    size = parse_pattern_size(p_id)
+    if size is None:
+        return None, None, f"패턴 키 형식 오류: {p_id}"
+
+    if "input" not in p_info:
+        return size, None, "input 누락"
+    if "expected" not in p_info:
+        return size, None, "expected 누락"
+
+    matrix = p_info["input"]
+    expected_norm = normalize_label(p_info["expected"])
+
+    if expected_norm not in VALID_RESULT_LABELS:
+        return size, None, f"expected 값 오류: {p_info['expected']}"
+
+    matrix_error = validate_matrix(matrix, size, f"{p_id}.input")
+    if matrix_error:
+        return size, None, matrix_error
+
+    return size, expected_norm, None
 
 def calculate_mac(matrix_a, matrix_b):
     """두 행렬의 같은 위치 원소를 곱하고 누적합(MAC)을 계산합니다."""
