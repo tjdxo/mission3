@@ -286,27 +286,30 @@ def run_user_input_mode():
     print(f"B 점수: {score_b}")
     print(f"연산 시간(평균/10회): {avg_time:.6f} ms")
     print(f"판정: {'판정 불가 (|A-B| < 1e-9)' if result == 'UNDECIDED' else result}")
-    
+
 def run_json_analysis_mode():
     data = load_data()
-    if not data: return
+    if not data:
+        return
 
-    filters = data.get("filters", {})
+    raw_filters = data.get("filters", {})
     patterns = data.get("patterns", {})
-    
+
     stats = {"total": 0, "pass": 0, "fail": 0, "fail_cases": []}
-    perf_summary = {}
+    perf_summary = defaultdict(lambda: {"times": [], "ops": 0})
+
+    validated_filters, filter_errors = validate_and_build_filters(raw_filters)
 
     print("\n#---------------------------------------")
     print("# [1] 필터 로드")
     print("#---------------------------------------")
-    for size_key in sorted(filters.keys(), key=lambda x: int(x.split("_")[1])):
-        _, error = normalize_filter_dict(filters[size_key])
-        if error:
-            print(f"✗ {size_key} 필터 로드 실패: {error}")
-        else:
-            print(f"✓ {size_key} 필터 로드 완료 (Cross, X)")
 
+    for size_key in sorted(raw_filters.keys(), key=lambda x: int(x.split("_")[1]) if x.split("_")[1].isdigit() else 9999):
+        if size_key in validated_filters:
+            print(f"✓ {size_key} 필터 로드 완료 (Cross, X)")
+        else:
+            print(f"✗ {size_key} 필터 로드 실패: {filter_errors.get(size_key, '알 수 없는 오류')}")
+    
     print("\n#---------------------------------------")
     print("# [2] 패턴 분석 (라벨 정규화 적용)")
     print("#---------------------------------------")
