@@ -312,19 +312,23 @@ def run_json_analysis_mode():
     print("#---------------------------------------")
 
     for p_id, p_info in patterns.items():
-        res, error = process_case(p_id, p_info, filters)
-        
+        stats["total"] += 1
+        res, error = process_case(p_id, p_info, validated_filters)
+
         if error:
             stats["fail"] += 1
             stats["fail_cases"].append(f"{p_id}: {error}")
+            print(f"--- {p_id} ---")
+            print(f"판정 불가 | FAIL | 사유: {error}")
             continue
 
-        # 결과 출력 및 통계 합산
-        stats["total"] += 1
-        if res["is_pass"]: stats["pass"] += 1
-        else: 
+        if res["is_pass"]:
+            stats["pass"] += 1
+        else:
             stats["fail"] += 1
-            stats["fail_cases"].append(f"{res['id']}: 판정 {res['result']} != 기대 {res['expected']}")
+            stats["fail_cases"].append(
+                f"{res['id']}: 판정 {res['result']} != 기대 {res['expected']}"
+            )
 
         print(f"--- {res['id']} ---")
         print(f"Cross 점수: {res['scores'][0]:.4f}")
