@@ -132,11 +132,28 @@ def normalize_label(label):
 
 def load_data():
     try:
-        with open('data.json', 'r') as f:
-            return json.load(f)
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
     except FileNotFoundError:
-        print("data.json 파일을 찾을 수 없습니다.")
+        print(f"{DATA_FILE} 파일을 찾을 수 없습니다.")
         return None
+    except json.JSONDecodeError as e:
+        print(f"{DATA_FILE} JSON 파싱 오류: {e.msg} (line {e.lineno}, col {e.colno})")
+        return None
+
+    if not isinstance(data, dict):
+        print("data.json 루트는 객체(dict)여야 합니다.")
+        return None
+
+    if not isinstance(data.get("filters"), dict):
+        print("data.json의 filters는 객체(dict)여야 합니다.")
+        return None
+
+    if not isinstance(data.get("patterns"), dict):
+        print("data.json의 patterns는 객체(dict)여야 합니다.")
+        return None
+
+    return data
 
 def normalize_filter_dict(filter_dict):
     """필터 키를 표준 라벨(Cross, X)로 정규화합니다."""
