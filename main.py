@@ -204,27 +204,30 @@ def validate_and_build_filters(raw_filters):
     return validated_filters, filter_errors
 
 def process_case(p_id, p_info, filters):
-    """패턴 하나를 분석하여 점수, 판정 결과, 소요 시간을 반환합니다."""
-    pattern_matrix = p_info.get("input")
-    expected_norm = normalize_label(p_info.get("expected"))
-    
-    # 키 추출 (size_5_1 -> size_5)
-    size_key = "_".join(p_id.split("_")[:2])
+    """패턴 하나를 검증/분석하여 점수, 판정 결과, 소요 시간을 반환합니다."""
+    size, expected_norm, pattern_error = validate_pattern_info(p_id, p_info)
+    if pattern_error:
+        return None, pattern_error
+
+    size_key = f"size_{size}"
     current_filters = filters.get(size_key)
 
     if not current_filters:
         return None, f"필터 누락 ({size_key})"
 
-    # MAC 연산 및 시간 측정 (10회 반복)
-    f_cross = current_filters.get("cross")
-    f_x = current_filters.get("x")
+    pattern_matrix = p_info["input"]
+    f_cross = current_filters["Cross"]
+    f_x = current_filters["X"]
+
+    # 패턴과 필터 크기 최종 교차 검증
+    if len(pattern_matrix) != len(f_cross) or len(pattern_matrix) != len(f_x):
+        return None, f"패턴/필터 크기 불일치 ({size_key})"
 
     score_cross, score_x, avg_time = measure_mac_pair(pattern_matrix, f_cross, f_x)
 
-    # 판정
     result = judge_result(score_cross, score_x, "Cross", "X")
     is_pass = (result == expected_norm)
-    
+
     return {
         "id": p_id,
         "size_key": size_key,
@@ -233,7 +236,7 @@ def process_case(p_id, p_info, filters):
         "expected": expected_norm,
         "is_pass": is_pass,
         "time": avg_time,
-        "n_squared": len(pattern_matrix)**2
+        "n_squared": len(pattern_matrix) ** 2
     }, None
 
 def print_performance_report(perf_data):
